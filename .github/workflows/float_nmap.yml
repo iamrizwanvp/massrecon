@@ -19,7 +19,7 @@ jobs:
         run: |
           mkdir -p output
           echo "[*] Starting full TCP port scan on all targets..."
-          nmap -Pn -T3 -sS -p- -iL nmaptargets.txt -oN output/nmap_full.txt
+          nmap -Pn -T3 -sT -p- -iL nmaptargets.txt -oN output/nmap_full.txt
           echo "[+] Scan complete. Output saved to output/nmap_full.txt"
 
       - name: Upload Scan Results
