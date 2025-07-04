@@ -16,27 +16,28 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Install Nuclei & Templates
+      - name: Install Nuclei & Update Templates
         run: |
-          go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-          nuclei --update-templates
-        env:
-          PATH: /home/runner/go/bin:${{ env.PATH }}
+          echo "[*] Installing Nuclei via Go..."
+          echo "GOPATH=$HOME/go" >> $GITHUB_ENV
+          echo "PATH=$HOME/go/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Run Nuclei Scan on livesubs.txt
+          go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+
+          echo "[*] Updating templates..."
+          $HOME/go/bin/nuclei --update-templates
+
+      - name: Run Nuclei on livesubs.txt
         run: |
           mkdir -p output
-          echo "[*] Running full Nuclei scan on livesubs.txt..."
-          nuclei -l livesubs.txt \
-            -t ~/nuclei-templates/ \
+          echo "[*] Running nuclei scan on livesubs.txt..."
+          $HOME/go/bin/nuclei -l livesubs.txt \
             -severity info,low,medium,high,critical \
             -o output/nuclei_deep_report.txt
           
-          echo "[+] Scan complete. Output saved to output/nuclei_deep_report.txt"
-        env:
-          PATH: /home/runner/go/bin:${{ env.PATH }}
+          echo "[+] Scan complete."
 
-      - name: Upload Nuclei Results
+      - name: Upload Scan Report
         uses: actions/upload-artifact@v4
         with:
           name: nuclei-deep-report
@@ -46,5 +47,5 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "✅ Nuclei scan on livesubs.txt completed using all templates. Results are available in GitHub Actions → Artifacts."}' \
+               -d '{"content": "✅ Nuclei scan complete. Check GitHub Actions > Artifacts for full report."}' \
                https://discord.com/api/webhooks/1326843541078409318/Bl-ku08YLuUdYa9tomkfKtbf1zN_sxpFbCXaIz5hko3S86mbjnS3SfqYywKc56D0SRBY
