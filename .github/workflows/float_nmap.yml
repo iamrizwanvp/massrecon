@@ -1,1 +1,36 @@
+name: Full Port Nmap Scan on Subdomains
 
+on:
+  workflow_dispatch:  # Manual run
+
+jobs:
+  nmap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Nmap
+        run: |
+          sudo apt update
+          sudo apt install -y nmap curl
+
+      - name: Run Nmap Full TCP Port Scan
+        run: |
+          mkdir -p output
+          echo "[*] Starting full TCP port scan on all targets..."
+          nmap -Pn -T3 -sS -p- -iL nmaptargets.txt -oN output/nmap_full.txt
+          echo "[+] Scan complete. Output saved to output/nmap_full.txt"
+
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-nmap-results
+          path: output/nmap_full.txt
+
+      - name: Notify Discord
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d '{"content": "✅ Nmap full-port scan complete for all subdomains. Results available in GitHub Actions → Artifacts."}' \
+            https://discord.com/api/webhooks/1326843541078409318/Bl-ku08YLuUdYa9tomkfKtbf1zN_sxpFbCXaIz5hko3S86mbjnS3SfqYywKc56D0SRBY
