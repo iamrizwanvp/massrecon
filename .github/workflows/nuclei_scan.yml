@@ -6,35 +6,36 @@ on:
 jobs:
   nuclei:
     runs-on: ubuntu-latest
+
+    env:
+      PATH: ${{ env.PATH }}:/home/runner/go/bin
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install Go and Nuclei
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Nuclei & Templates
         run: |
-          sudo apt update
-          sudo apt install -y curl git unzip wget
-
-          # Install Go
-          wget https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
-          tar -C /usr/local -xzf go1.22.3.linux-amd64.tar.gz
-          echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $GITHUB_ENV
-          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-
-          # Install nuclei
+          echo "[*] Installing Nuclei..."
           go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
 
-          # Update nuclei templates
-          ~/go/bin/nuclei --update-templates
+          echo "[*] Updating Nuclei Templates..."
+          nuclei --update-templates
 
-      - name: Run Nuclei Full Template Scan on livesubs.txt
+      - name: Run Nuclei Scan on livesubs.txt
         run: |
           mkdir -p output
-          echo "[*] Running full deep nuclei scan..."
-          ~/go/bin/nuclei -l livesubs.txt -t ~/nuclei-templates/ \
+          echo "[*] Running full Nuclei scan on livesubs.txt..."
+          nuclei -l livesubs.txt \
+            -t ~/nuclei-templates/ \
             -severity info,low,medium,high,critical \
             -o output/nuclei_deep_report.txt
-
+          
           echo "[+] Scan complete. Output saved to output/nuclei_deep_report.txt"
 
       - name: Upload Nuclei Results
@@ -43,9 +44,9 @@ jobs:
           name: nuclei-deep-report
           path: output/nuclei_deep_report.txt
 
-      - name: Send Discord Notification
+      - name: Notify Discord
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": "✅ Nuclei deep scan completed on livesubs.txt. All templates used. Report is downloadable from GitHub Actions → Artifacts."}' \
+               -d '{"content": "✅ Nuclei scan on livesubs.txt completed using all templates. Results are available in GitHub Actions → Artifacts."}' \
                https://discord.com/api/webhooks/1326843541078409318/Bl-ku08YLuUdYa9tomkfKtbf1zN_sxpFbCXaIz5hko3S86mbjnS3SfqYywKc56D0SRBY
