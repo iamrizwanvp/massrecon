@@ -1,1 +1,25 @@
+name: Nmap Scan - Nestle
+
+on:
+  workflow_dispatch:  # manual trigger only for now
+
+jobs:
+  nmap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Nmap
+        run: |
+          sudo apt update
+          sudo apt install -y nmap
+
+      - name: Run Nmap Scan
+        run: |
+          mkdir output
+          nmap -Pn -sV nestle.com -oN output/nmap.txt
+
+      - name: Upload Nmap Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nmap-result
+          path: output/nmap.txt
 
