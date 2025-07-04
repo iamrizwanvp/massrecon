@@ -7,9 +7,6 @@ jobs:
   nuclei:
     runs-on: ubuntu-latest
 
-    env:
-      PATH: ${{ env.PATH }}:/home/runner/go/bin
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -21,11 +18,10 @@ jobs:
 
       - name: Install Nuclei & Templates
         run: |
-          echo "[*] Installing Nuclei..."
           go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-
-          echo "[*] Updating Nuclei Templates..."
           nuclei --update-templates
+        env:
+          PATH: /home/runner/go/bin:${{ env.PATH }}
 
       - name: Run Nuclei Scan on livesubs.txt
         run: |
@@ -37,6 +33,8 @@ jobs:
             -o output/nuclei_deep_report.txt
           
           echo "[+] Scan complete. Output saved to output/nuclei_deep_report.txt"
+        env:
+          PATH: /home/runner/go/bin:${{ env.PATH }}
 
       - name: Upload Nuclei Results
         uses: actions/upload-artifact@v4
